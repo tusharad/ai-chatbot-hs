@@ -15,6 +15,7 @@ import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as Map
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Data.Text.Lazy as TL
 import Langchain.DocumentLoader.Core
 import qualified Langchain.Embeddings.Gemini as Gemini
 import Langchain.Embeddings.Ollama
@@ -101,7 +102,7 @@ insertDocEmbed attId (d, e) = do
         DocumentEmbedding
           { documentEmbeddingID = ()
           , documentEmbeddingMessageAttachmentID = attId
-          , documentEmbeddingDocumentContent = pageContent d
+          , documentEmbeddingDocumentContent = TL.toStrict $ pageContent d
           , documentEmbeddingEmbedding = NE.fromList $ map realToFrac e
           }
   addDocumentEmbedding docEmbed
@@ -143,4 +144,4 @@ docToText :: [Document] -> Text
 docToText =
   mconcat
     . map
-      (\doc -> pageContent doc <> T.pack (show $ metadata doc))
+      (\doc -> TL.toStrict (pageContent doc) <> T.pack (show $ metadata doc))

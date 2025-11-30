@@ -3,6 +3,10 @@ snapshot: nightly-2025-10-02
 packages:
 - .
 
+allow-newer: true
+allow-newer-deps: 
+  - servant-multipart-client
+
 extra-deps:
   - git: https://github.com/tusharad/orville
     commit: 431d3565154d6b7e47ae6865ba6e9e32e32cb2f7
@@ -10,7 +14,10 @@ extra-deps:
      - orville-postgresql
 
   - git: https://github.com/tusharad/langchain-hs
-    commit: 2b4dcc8a369ba5393b65a00e702f9d7e841ab1b0
+    commit: 1c25927b6142416e9042f7696c44d0643d0193a8
+
+  - git: https://github.com/MercuryTechnologies/openai
+    commit: 3a5c00527bcda652a188ee7c54127eea90ce1bb7 
 
   - pdf-toolbox-document-0.1.4@sha256:6016daf47765f4a06b23a90e59741f34f7c2c8561091a9db3caa922339037108,2405
 
@@ -21,3 +28,9 @@ extra-deps:
   - cryptohash-0.11.9@sha256:59d9494ba0cc9eef087ecba2e12e4d3e2d3b0327dd1542af552e3dca0e7de70d,4230
 
   - cryptonite-0.30@sha256:12c85dea7be63e5ad90bcb487eb3846bf3c413347f94336fa1dede7b28f9936a,18301
+
+  - servant-multipart-client-0.12.2@sha256:e8105783e7dbef178a38dcfd05f4d12a8229eac88cfe49319f272dcb544e7365,2276
+
+    # - random-1.2.1.3@sha256:117541ba0a177397a3333f94870f789ef050dca31b0688a19824b2bc401b8823,6237
+
+  - random-1.3.1@sha256:0b4f649c3e78713b2ccad1535251ee34b148237fb2229d7058c2b1d9ccc324b8,6004

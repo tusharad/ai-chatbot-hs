@@ -4,6 +4,7 @@ module Modulus.BE.LLM.PGVectorRetriever
 
 import qualified Data.Map.Strict as Map
 import Data.Text (Text)
+import qualified Data.Text.Lazy as TL
 import Langchain.DocumentLoader.Core (Document (..))
 import Langchain.Embeddings.Core
 import Langchain.Retriever.Core
@@ -33,7 +34,7 @@ instance Embeddings a => Retriever (PGVectorRetriever a) where
             map
               ( \docEmbed ->
                   Document
-                    (documentEmbeddingDocumentContent docEmbed)
+                    (TL.fromStrict $ documentEmbeddingDocumentContent docEmbed)
                     Map.empty
               )
               docEmbedList

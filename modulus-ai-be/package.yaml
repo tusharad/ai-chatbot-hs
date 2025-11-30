@@ -33,6 +33,7 @@ dependencies:
   - mtl
   - orville-postgresql
   - ollama-haskell >= 0.2.1.0
+  - openai >= 2.2.1
   - password
   - random
   - req
