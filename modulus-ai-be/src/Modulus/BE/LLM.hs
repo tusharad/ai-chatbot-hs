@@ -42,9 +42,6 @@ import Langchain.Error (LangchainError, fromString)
 import qualified Langchain.LLM.Core as L
 import qualified Langchain.LLM.Core as Langchain
 import Langchain.LLM.Gemini as LLMGemini
-import qualified Langchain.LLM.Internal.OpenAI as Internal
-import qualified Langchain.LLM.Internal.OpenAI as OpenAIInternal
-import qualified Langchain.LLM.Internal.SchemaBuilder as LangchainSchema
 import Langchain.LLM.Ollama as LLMOllama
 import Langchain.LLM.OpenAICompatible as OpenAILike hiding (metadata)
 import Langchain.PromptTemplate
@@ -60,6 +57,8 @@ import Modulus.BE.LLM.Embeddings (getRelevantContext, storeDocsForEmbeddings)
 import Modulus.BE.Log (logDebug, logError)
 import Modulus.BE.Monad.AppM (AppM)
 import Modulus.BE.Monad.Storage
+import qualified OpenAI.V1.Chat.Completions as OpenAI hiding (ChatCompletionObject (..))
+import qualified OpenAI.V1.Tool as OpenAI (Function (..), Tool (..))
 import System.FilePath
 import UnliftIO.Async (mapConcurrently)
 
@@ -148,12 +147,12 @@ systemTemplate =
 runOpenRouterWithTools ::
   OpenAICompatible ->
   NE.NonEmpty Message ->
-  StreamHandler OpenAIInternal.ChatCompletionChunk ->
+  StreamHandler OpenAI.ChatCompletionChunk ->
   Text ->
   IO (Either LangchainError ())
 runOpenRouterWithTools llm msgList sh tool = do
   let toolDefs = getOpenRouterToolDefinitions tool
-      openAIParams = defaultOpenAIParams {OpenAILike.tools = Just toolDefs}
+      openAIParams = _ -- TODO -- defaultOpenAIParams {OpenAILike.tools = Just toolDefs}
 
   -- First call to get tool calls
   eRes <- chat llm msgList (Just openAIParams)
@@ -175,75 +174,79 @@ runOpenRouterWithTools llm msgList sh tool = do
           stream llm updatedMsgList sh Nothing
 
 -- TODO: These should be Haskell types
-getOpenRouterToolDefinitions :: Text -> [OpenAIInternal.InputTool]
+getOpenRouterToolDefinitions :: Text -> [OpenAI.Tool]
 getOpenRouterToolDefinitions = \case
   "WebSearch" -> [openRouterWebScraperTool]
   "Wikipedia" -> [openRouterWikiSearchTool]
   _ -> [] -- TODO: There should be Haskell type instead of plain Text
 
-openRouterWebScraperTool :: OpenAIInternal.InputTool
-openRouterWebScraperTool =
-  OpenAIInternal.InputTool
-    { toolType = "function"
-    , function =
-        OpenAIInternal.FunctionDef
-          { functionName = "webScraper"
-          , functionDescription =
-              Just
-                "Scrapes content from a webpage. Provide a valid URL."
-          , functionParameters =
-              Just $
-                OpenAIInternal.FunctionParameters
-                  { parameterType = "object"
-                  , requiredParams = Just ["url"]
-                  , parameterProperties =
-                      Just $
-                        HM.fromList
-                          [
-                            ( "url"
-                            , OpenAIInternal.FunctionParameters
-                                "string"
-                                Nothing
-                                Nothing
-                                Nothing
-                            )
-                          ]
-                  , additionalProperties = Just False
-                  }
-          , functionStrict = Nothing
-          }
-    }
+openRouterWebScraperTool :: OpenAI.Tool
+openRouterWebScraperTool = _ -- TODO
+{-
+OpenAIInternal.InputTool
+  { toolType = "function"
+  , function =
+      OpenAIInternal.FunctionDef
+        { functionName = "webScraper"
+        , functionDescription =
+            Just
+              "Scrapes content from a webpage. Provide a valid URL."
+        , functionParameters =
+            Just $
+              OpenAIInternal.FunctionParameters
+                { parameterType = "object"
+                , requiredParams = Just ["url"]
+                , parameterProperties =
+                    Just $
+                      HM.fromList
+                        [
+                          ( "url"
+                          , OpenAIInternal.FunctionParameters
+                              "string"
+                              Nothing
+                              Nothing
+                              Nothing
+                          )
+                        ]
+                , additionalProperties = Just False
+                }
+        , functionStrict = Nothing
+        }
+  }
+  -}
 
-openRouterWikiSearchTool :: OpenAIInternal.InputTool
-openRouterWikiSearchTool =
-  OpenAIInternal.InputTool
-    { toolType = "function"
-    , function =
-        OpenAIInternal.FunctionDef
-          { functionName = "searchWiki"
-          , functionDescription = Just "Search Wikipedia for information"
-          , functionParameters =
-              Just $
-                OpenAIInternal.FunctionParameters
-                  { parameterType = "object"
-                  , requiredParams = Just ["query"]
-                  , parameterProperties =
-                      Just $
-                        HM.fromList
-                          [
-                            ( "query"
-                            , OpenAIInternal.FunctionParameters
-                                "string"
-                                Nothing
-                                Nothing
-                                Nothing
-                            )
-                          ]
-                  , additionalProperties = Just False
-                  }
-          , functionStrict = Nothing
-          }
-    }
+openRouterWikiSearchTool :: OpenAI.Tool
+openRouterWikiSearchTool = _ -- TODO
+{-
+OpenAIInternal.InputTool
+  { toolType = "function"
+  , function =
+      OpenAIInternal.FunctionDef
+        { functionName = "searchWiki"
+        , functionDescription = Just "Search Wikipedia for information"
+        , functionParameters =
+            Just $
+              OpenAIInternal.FunctionParameters
+                { parameterType = "object"
+                , requiredParams = Just ["query"]
+                , parameterProperties =
+                    Just $
+                      HM.fromList
+                        [
+                          ( "query"
+                          , OpenAIInternal.FunctionParameters
+                              "string"
+                              Nothing
+                              Nothing
+                              Nothing
+                          )
+                        ]
+                , additionalProperties = Just False
+                }
+        , functionStrict = Nothing
+        }
+  }
+  -}
 
 executeOpenRouterToolCall :: Text -> ToolCall -> IO (String, Text)
 executeOpenRouterToolCall tool (ToolCall _ _ toolFunction) = do
@@ -275,8 +278,8 @@ runOllamaWithTools ::
   IO (Either LangchainError ())
 runOllamaWithTools llm msgList sh tool = do
   let toolDefs = getToolDefinitions tool
-      ollamaParams = defaultOllamaParams {LLMOllama.tools = Just toolDefs}
-  -- First call to get tool calls
+      ollamaParams = _ -- TODO -- defaultOllamaParams {LLMOllama.tools = Just toolDefs}
+      -- First call to get tool calls
   eRes <- chat llm msgList (Just ollamaParams)
   case eRes of
     Left err -> pure $ Left err
@@ -437,41 +440,48 @@ instance LLMProvider Ollama where
               Ollama.|! "title"
     let msgContent = generateTitlePrompt <> userQuestion
     let msg = NE.fromList [Message OpenAILike.User msgContent defaultMessageData]
-    let ollamaParams =
-          defaultOllamaParams
-            { format = Just $ Ollama.SchemaFormat schema
-            }
+    let ollamaParams = _ -- TODO
+    {-
+    defaultOllamaParams
+      { format = Just $ Ollama.SchemaFormat schema
+      }
+      -}
     fmap (toNewTitle . content) <$> chat l msg (Just ollamaParams)
   summarizeOlderConversation l oldConv = do
     let msgContent = summarizeConversationHistoryPrompt <> oldConv
     let msg = NE.fromList [Message OpenAILike.User msgContent defaultMessageData]
     fmap content <$> chat l msg Nothing
 
-openAIChunkToText :: OpenAIInternal.ChatCompletionChunk -> T.Text
+openAIChunkToText :: OpenAI.ChatCompletionChunk -> T.Text
 openAIChunkToText completionChunk = do
+  _ -- TODO
+  {-
   fromMaybe ""
     . OpenAIInternal.contentForDelta
     . OpenAIInternal.chunkChoiceDelta
     . fromMaybe emptyChoice
     . listToMaybe
     $ OpenAIInternal.chunkChoices completionChunk
+    -}
   where
-    emptyChoice =
-      OpenAIInternal.ChunkChoice
-        ( OpenAIInternal.Delta
-            { OpenAIInternal.contentForDelta = Nothing
-            , OpenAIInternal.deltaRole = Nothing
-            , OpenAIInternal.deltaToolCalls = Nothing
-            , OpenAIInternal.deltaRefusal = Nothing
-            , OpenAIInternal.deltaFunctionCall = Nothing
-            }
-        )
-        1
-        Nothing
-        Nothing
+    emptyChoice = _ -- TODO
+    {-
+    OpenAIInternal.ChunkChoice
+      ( OpenAIInternal.Delta
+          { OpenAIInternal.contentForDelta = Nothing
+          , OpenAIInternal.deltaRole = Nothing
+          , OpenAIInternal.deltaToolCalls = Nothing
+          , OpenAIInternal.deltaRefusal = Nothing
+          , OpenAIInternal.deltaFunctionCall = Nothing
+          }
+      )
+      1
+      Nothing
+      Nothing
+      -}
 
 toOpenAIStreamHandler ::
-  StreamHandler Text -> StreamHandler OpenAIInternal.ChatCompletionChunk
+  StreamHandler Text -> StreamHandler OpenAI.ChatCompletionChunk
 toOpenAIStreamHandler sh =
   StreamHandler
     { onToken = onToken sh . openAIChunkToText
@@ -487,19 +497,23 @@ instance LLMProvider OpenAICompatible where
       msgs
       (toOpenAIStreamHandler sh)
   generateNewConversationTitle l userQuestion = do
-    let schema =
-          LangchainSchema.buildSchema $
-            LangchainSchema.emptyObject
-              LangchainSchema.|+ ("title", LangchainSchema.JString)
-              LangchainSchema.|! "title"
+    let schema = _ -- TODO
+    {-
+     LangchainSchema.buildSchema $
+       LangchainSchema.emptyObject
+         LangchainSchema.|+ ("title", LangchainSchema.JString)
+         LangchainSchema.|! "title"
+         -}
     let msgContent = generateTitlePrompt <> userQuestion
     let msg = NE.fromList [Message OpenAILike.User msgContent defaultMessageData]
-    let params =
-          defaultOpenAIParams
-            { responseFormat =
-                Just $
-                  Internal.JsonSchemaFormat "SomeSchema" schema False
-            }
+    let params = _ -- TODO
+    {-
+      defaultOpenAIParams
+        { responseFormat =
+            Just $
+              Internal.JsonSchemaFormat "SomeSchema" schema False
+        }
+        -}
     fmap (toNewTitle . content) <$> chat l msg (Just params)
   summarizeOlderConversation l oldConv = do
     let msgContent = summarizeConversationHistoryPrompt <> oldConv
@@ -524,12 +538,12 @@ instance LLMProvider Gemini where
 geminiToOpenAICompatible :: Gemini -> OpenAICompatible
 geminiToOpenAICompatible Gemini {..} =
   OpenAILike.OpenAICompatible
-    { OpenAILike.apiKey = Just apiKey
-    , modelName = geminiModelName
-    , callbacks = []
+    { OpenAILike.apiKey = apiKey
+    , -- , modelName = geminiModelName
+      callbacks = []
     , baseUrl = baseUrl
-    , defaultBaseUrl = "https://generativelanguage.googleapis.com/v1beta/openai"
-    , providerName = "gemini"
+    , -- , defaultBaseUrl = "https://generativelanguage.googleapis.com/v1beta/openai"
+      providerName = "gemini"
     }
 
 mkLLMProvider :: LLMRespStreamBody -> AppM (Either Text AnyLLMProvider)
@@ -538,14 +552,14 @@ mkLLMProvider LLMRespStreamBody {..} = pure $ case provider of
     let llm = Ollama modelUsed []
      in Right $ AnyLLMProvider llm
   "openrouter" ->
-    let llm = mkOpenRouter modelUsed [] Nothing (fromMaybe "" apiKey)
+    let llm = mkOpenRouter [] Nothing (fromMaybe "" apiKey)
      in Right $ AnyLLMProvider llm
   "gemini" ->
     let llm =
           Gemini
             { apiKey = fromMaybe "" apiKey
-            , geminiModelName = modelUsed
-            , callbacks = []
+            , --     , geminiModelName = modelUsed
+              callbacks = []
             , baseUrl = Nothing
             }
      in Right $ AnyLLMProvider llm
